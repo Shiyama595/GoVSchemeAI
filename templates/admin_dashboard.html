@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | GovScheme AI</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; color: #1e293b; }
+        .card { border-radius: 16px; border: none; margin-bottom: 1.5rem; }
+        .stat-card { padding: 1.5rem; color: white; transition: 0.3s; }
+        .chart-container { position: relative; height: 300px; }
+        .search-container { position: relative; margin-bottom: 2rem; }
+        .search-icon { position: absolute; left: 15px; top: 12px; color: #64748b; }
+        .search-input { padding-left: 45px; border-radius: 12px; border: 1px solid #6366f1; height: 48px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
+        .table-container { background: white; border-radius: 16px; padding: 20px; display: none; } /* Hidden by default */
+        
+        @media print {
+            .no-print, .btn, .search-container, nav { display: none !important; }
+            .table-container { display: block !important; }
+            .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom mb-4 no-print">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="#"><i class="bi bi-shield-lock-fill me-2"></i>Admin Panel</a>
+        <div class="d-flex">
+            <a href="/dashboard" class="btn btn-outline-primary btn-sm rounded-pill">Exit</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-md-4">
+            <div class="card shadow-sm stat-card bg-primary">
+                <h3 class="fw-bold mb-0">{{ stats.total_schemes }}</h3>
+                <small>Total Active Schemes</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm stat-card bg-dark">
+                <h3 class="fw-bold mb-0">{{ stats.top_state }}</h3>
+                <small>Top Targeted State</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm stat-card bg-info">
+                <h3 class="fw-bold mb-0">{{ stats.total_users }}</h3>
+                <small>Registered Users</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row no-print">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm p-4">
+                <h6 class="fw-bold text-muted mb-3">Schemes by Category</h6>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm p-4">
+                <h6 class="fw-bold text-muted mb-3">Top Occupations</h6>
+                <div class="chart-container">
+                    <canvas id="occupationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-container no-print">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" id="schemeSearch" class="form-control search-input" placeholder="Type to search the master database..." onkeyup="filterSchemes()">
+    </div>
+
+    <div class="table-container shadow-sm mb-5" id="resultsWrapper">
+        <h5 class="fw-bold mb-4">Search Results</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="schemeTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Scheme Name</th>
+                        <th>Category</th>
+                        <th>Target Occupation</th>
+                        <th>State</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for scheme in all_schemes %}
+                    <tr>
+                        <td class="fw-bold text-dark">{{ scheme.Scheme_Name }}</td>
+                        <td><span class="badge bg-light text-primary">{{ scheme.Category }}</span></td>
+                        <td>{{ scheme.Occupation }}</td>
+                        <td>{{ scheme.Applicable_State }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CHARTS LOGIC ---
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels|tojson }},
+            datasets: [{
+                data: {{ cat_values|tojson }},
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+            }]
+        },
+        options: { maintainAspectRatio: false }
+    });
+
+    new Chart(document.getElementById('occupationChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ occ_labels|tojson }},
+            datasets: [{
+                label: 'Schemes',
+                data: {{ occ_values|tojson }},
+                backgroundColor: '#6366f1'
+            }]
+        },
+        options: { maintainAspectRatio: false }
+    });
+
+    // --- SEARCH & TOGGLE LOGIC ---
+    function filterSchemes() {
+        let input = document.getElementById('schemeSearch');
+        let filter = input.value.toLowerCase();
+        let wrapper = document.getElementById('resultsWrapper');
+        let table = document.getElementById('schemeTable');
+        let tr = table.getElementsByTagName('tr');
+        
+        // Show table if there is text, hide if empty
+        if (filter.length > 0) {
+            wrapper.style.display = "block";
+        } else {
+            wrapper.style.display = "none";
+        }
+
+        for (let i = 1; i < tr.length; i++) {
+            let rowText = tr[i].textContent.toLowerCase();
+            tr[i].style.display = rowText.includes(filter) ? "" : "none";
+        }
+    }
+</script>
+
+</body>
+</html>

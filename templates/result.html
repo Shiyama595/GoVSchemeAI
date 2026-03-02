@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommended Schemes | GovScheme AI</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .results-header { background: white; border-bottom: 1px solid #e2e8f0; padding: 30px 0; margin-bottom: 20px; }
+        .scheme-card { 
+            border: none; 
+            border-radius: 16px; 
+            transition: all 0.3s ease; 
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .scheme-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Profile Section Styling */
+        .profile-summary {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        .profile-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 700; }
+        .profile-value { font-size: 1rem; color: #1e293b; font-weight: 600; }
+
+        .doc-badge { 
+            background-color: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            color: #475569; 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        .link-btn {
+            background-color: #6366f1;
+            color: white;
+            border-radius: 10px;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .link-btn:hover { background-color: #4f46e5; color: white; }
+        .empty-state { padding: 80px 0; text-align: center; }
+
+        /* --- PRINT/DOWNLOAD STYLING --- */
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white !important; padding: 0; }
+            .container { max-width: 100% !important; width: 100% !important; }
+            .profile-summary { border: 2px solid #f1f5f9 !important; margin-top: 20px; }
+            .scheme-card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; page-break-inside: avoid; }
+            .results-header { padding: 10px 0; border-bottom: 2px solid #6366f1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="results-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-1">Eligibility Report</h2>
+                <p class="text-muted mb-0">Personalized government scheme recommendations.</p>
+            </div>
+            <div class="d-flex gap-2 no-print">
+                <button onclick="window.print()" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-download me-2"></i>Download Report
+                </button>
+                <a href="/dashboard" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="profile-summary shadow-sm">
+        <h5 class="fw-bold mb-3"><i class="bi bi-person-check-fill text-primary me-2"></i>Applicant Details</h5>
+        <div class="row g-3">
+            <div class="col-6 col-md-2">
+                <div class="profile-label">Age</div>
+                <div class="profile-value">{{ user.age }} Years</div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="profile-label">Gender</div>
+                <div class="profile-value">{{ user.gender }}</div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="profile-label">Occupation</div>
+                <div class="profile-value">{{ user.occupation }}</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="profile-label">Annual Income</div>
+                <div class="profile-value">₹{{ user.income }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% if schemes %}
+        <h5 class="fw-bold mb-4 no-print">Matching Schemes</h5>
+        <div class="row g-4">
+            {% for scheme in schemes %}
+<div class="col-lg-6">
+    <div class="card scheme-card h-100 p-4 d-flex flex-column">
+
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                Verified Eligible
+            </span>
+            <i class="bi bi-bookmark-heart text-muted fs-5 no-print"></i>
+        </div>
+
+        <h4 class="fw-bold text-dark mb-3">{{ scheme.scheme_name }}</h4>
+        <p class="text-muted small mb-4">{{ scheme.description }}</p>
+
+        <div class="mb-4">
+            <label class="small fw-bold text-uppercase text-primary mb-2 d-block">
+                Required Documents
+            </label>
+            <div class="doc-badge">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                {{ scheme.required_documents }}
+            </div>
+        </div>
+
+        <!-- Button stays inside card -->
+        <div class="mt-auto pt-3 border-top no-print">
+            <a href="{{ scheme.official_link }}" target="_blank"
+               class="link-btn w-100 justify-content-center">
+                Apply on Official Portal
+                <i class="bi bi-box-arrow-up-right ms-2"></i>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state text-center no-print">
+            <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
+            <h3 class="fw-bold mt-4">No Matching Schemes Found</h3>
+            <p class="text-muted mx-auto" style="max-width: 400px;">
+                Try adjusting your income or occupation in the dashboard.
+            </p>
+            <a href="/dashboard" class="btn btn-primary px-5 py-2 mt-3 rounded-pill">Go Back</a>
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

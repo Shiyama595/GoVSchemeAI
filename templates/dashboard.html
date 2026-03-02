@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | GovScheme AI</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Global Styles */
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; color: #1e293b; }
+        .hero-section { background: white; border-bottom: 1px solid #e2e8f0; }
+        .bg-light-primary { background-color: #eef2ff; }
+        .bg-light-success { background-color: #ecfdf5; }
+
+        /* Card Customization */
+        .custom-card { border-radius: 16px; border: none; transition: transform 0.2s; }
+        .custom-input { 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            padding: 10px 15px; 
+            font-size: 14px;
+        }
+        .custom-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); outline: none; }
+        .section-label { 
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px; 
+            font-weight: 700; color: #6366f1; margin-bottom: 12px;
+        }
+        .icon-box { 
+            width: 42px; height: 42px; border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        }
+
+        /* Chatbot Styling */
+        #chatbot-button {
+            position: fixed; bottom: 30px; right: 30px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white; width: 60px; height: 60px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 9999; box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+            font-size: 24px; transition: 0.3s;
+        }
+        #chatbot-box {
+            position: fixed; bottom: 100px; right: 30px;
+            width: 380px; height: 550px; background: white;
+            display: none; flex-direction: column;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15); border-radius: 20px;
+            overflow: hidden; z-index: 9999; border: 1px solid #f1f5f9;
+        }
+        #chatbot-header {
+            background: #6366f1; color: white; padding: 18px;
+            font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+        }
+        #chatbot-messages { flex: 1; padding: 20px; overflow-y: auto; background: #fff; display: flex; flex-direction: column; }
+        .bot-msg {
+            background: #f1f5f9; padding: 12px 16px; border-radius: 15px 15px 15px 4px;
+            margin-bottom: 15px; font-size: 13.5px; color: #334155; max-width: 85%;
+        }
+        .user-msg {
+            background: #6366f1; color: white; padding: 12px 16px;
+            border-radius: 15px 15px 4px 15px; margin-bottom: 15px;
+            font-size: 13.5px; align-self: flex-end; max-width: 85%;
+        }
+        #chatbot-input { padding: 15px; display: flex; border-top: 1px solid #f1f5f9; }
+        #chatbot-input input {
+            flex: 1; border: none; background: #f8fafc; padding: 10px 15px;
+            border-radius: 10px; outline: none; font-size: 14px;
+        }
+        .btn-send { background: #6366f1; color: white; border: none; border-radius: 10px; padding: 0 15px; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    <div class="hero-section mb-4 shadow-sm">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-4">
+                <div>
+                    <h2 class="fw-bold mb-0 text-dark">Welcome, <span class="text-primary">{{ session['user'] }}</span> 👋</h2>
+                    <p class="text-muted mb-0">Discover schemes customized for your eligibility.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if session.get('is_admin') %}
+                    <a href="/admin" class="btn btn-warning btn-sm px-4 rounded-pill fw-bold">Admin Panel</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger rounded-pill px-4">
+    <i class="bi bi-box-arrow-right me-2"></i>Logout
+</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm custom-card">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h4 class="fw-bold mb-1"><i class="bi bi-funnel me-2 text-primary"></i>Eligibility Engine</h4>
+                        <p class="small text-muted">Fill in your profile to find matching government schemes.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="/recommend" method="POST">
+                            <div class="section-label">Personal Details</div>
+                            <div class="row mb-4">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold">Age</label>
+                                    <input type="number" name="age" class="form-control custom-input" placeholder="Years" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold">Gender</label>
+                                    <select name="gender" class="form-select custom-input">
+                                        {% for g in genders %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold">Category</label>
+                                    <select name="category" class="form-select custom-input">
+                                        {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="section-label">Economic Profile</div>
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">Annual Income (₹)</label>
+                                    <input type="number" name="income" class="form-control custom-input" placeholder="e.g. 150000" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">Occupation</label>
+                                    <select name="occupation" class="form-select custom-input" required>
+                                        {% for o in occupations %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="section-label">Geography & Accessibility</div>
+                            <div class="row mb-4">
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold">Area Type</label>
+                                    <select name="area_type" class="form-select custom-input">
+                                        {% for a in area_types %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold">Disability Status</label>
+                                    <select name="disability" class="form-select custom-input">
+                                        {% for d in disabilities %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm">
+                                Find My Schemes <i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm bg-primary text-white mb-4 custom-card">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold">AI Support</h5>
+                        <p class="small opacity-75">Need help understanding a specific scheme? Ask our AI Assistant below.</p>
+                        <button onclick="toggleChatbot()" class="btn btn-light w-100 fw-bold rounded-pill mt-2">Open Assistant</button>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm custom-card">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3">System Insights</h6>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="icon-box bg-light-primary me-3 text-primary"><i class="bi bi-shield-check"></i></div>
+                            <div>
+                                <p class="mb-0 fw-bold small">Verified Data</p>
+                                <p class="text-muted small mb-0">Latest Government Gazette sync.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <div class="icon-box bg-light-success me-3 text-success"><i class="bi bi-robot"></i></div>
+                            <div>
+                                <p class="mb-0 fw-bold small">Semantic Search</p>
+                                <p class="text-muted small mb-0">Powered by MiniLM-L6-v2.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chatbot-button" onclick="toggleChatbot()">
+    <i class="bi bi-chat-dots-fill"></i>
+</div>
+
+<div id="chatbot-box">
+    <div id="chatbot-header">
+        <div class="d-flex align-items-center">
+            <div class="icon-box bg-white text-primary me-2" style="width:30px; height:30px; font-size: 14px;">AI</div>
+            <span>Scheme Assistant</span>
+        </div>
+        <span onclick="toggleChatbot()" style="cursor:pointer; font-size:24px;">&times;</span>
+    </div>
+    <div id="chatbot-messages">
+        <div class="bot-msg">Hello! I'm your AI assistant. Ask me anything about schemes like "Pension" or "Health".</div>
+    </div>
+    <div id="chatbot-input">
+        <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off">
+        <button onclick="sendMessage()" class="btn-send"><i class="bi bi-send-fill"></i></button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function toggleChatbot() {
+        const box = document.getElementById("chatbot-box");
+        box.style.display = (box.style.display === "flex") ? "none" : "flex";
+    }
+
+    function sendMessage() {
+        const input = document.getElementById("chat-input");
+        const msg = input.value.trim();
+        if(!msg) return;
+
+        const container = document.getElementById("chatbot-messages");
+        container.innerHTML += `<div class="user-msg">${msg}</div>`;
+        input.value = "";
+        
+        const loadingId = "load-" + Date.now();
+        container.innerHTML += `<div id="${loadingId}" class="bot-msg">Thinking...</div>`;
+        container.scrollTop = container.scrollHeight;
+
+        fetch("/chatbot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById(loadingId).remove();
+            container.innerHTML += `<div class="bot-msg">${data.reply}</div>`;
+            container.scrollTop = container.scrollHeight;
+        });
+    }
+
+    document.getElementById("chat-input").addEventListener("keypress", (e) => {
+        if(e.key === "Enter") sendMessage();
+    });
+</script>
+
+</body>
+</html>

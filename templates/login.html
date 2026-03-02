@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GovScheme AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .login-card {
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin-top: 50px;
+        }
+        .icon-circle {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-size: 1.8rem;
+            box-shadow: 0 8px 15px rgba(13, 110, 253, 0.2);
+        }
+        .captcha-wrapper img {
+            max-width: 160px;
+            height: auto;
+            border: 1px solid #dee2e6;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-5 col-lg-4">
+            <div class="card login-card shadow-lg border-0">
+                <div class="card-body p-4 p-md-5">
+                    
+                    <div class="text-center mb-4">
+                        <div class="icon-circle bg-primary text-white mb-3">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h3 class="fw-bold">GovScheme AI</h3>
+                        <p class="text-muted small">Enter credentials to access portal</p>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show small py-2" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.5rem;"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
+                                <input class="form-control bg-light border-0" name="username" placeholder="Username" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control bg-light border-0" name="password" placeholder="Password" required>
+                            </div>
+                        </div>
+
+                        <div class="captcha-wrapper bg-light p-3 rounded-3 mb-4 text-center">
+                            <p class="small text-muted mb-2">Security Verification</p>
+                            <img src="data:image/png;base64,{{ captcha_image }}" alt="CAPTCHA" class="img-fluid rounded shadow-sm mb-3">
+                            <input class="form-control text-center fw-bold" name="captcha" placeholder="Type Captcha" required>
+                        </div>
+
+                        <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm mb-3">
+                            Login <i class="bi bi-box-arrow-in-right ms-1"></i>
+                        </button>
+
+                        <div class="text-center">
+                            <span class="small text-muted">New user?</span>
+                            <a href="/register" class="small text-decoration-none fw-bold ms-1">Register</a>
+                            <span class="mx-1 text-muted">|</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <p class="text-center mt-4 text-muted small">© 2026 Government Assistance Portal</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
